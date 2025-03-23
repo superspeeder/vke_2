@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include "utils/types.hpp"
 #include "vke/pre.hpp"
+
+#include "vke/dependency.hpp"
+#include "vke/utils/types.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -42,7 +44,8 @@ namespace vke {
     ///////////////
     /// Classes ///
     ///////////////
-    class VKE_API Instance final : public std::enable_shared_from_this<Instance> {
+    class VKE_API Instance final : public std::enable_shared_from_this<Instance>,
+                                   public Ownable {
         Instance(std::string_view app_name, Version app_version);
 
       public:
@@ -50,7 +53,7 @@ namespace vke {
             return std::shared_ptr<Instance>(new Instance(app_name, app_version));
         }
 
-        ~Instance();
+        ~Instance() override;
 
         [[nodiscard]] std::vector<PhysicalDevice>                    get_physical_devices();
         [[nodiscard]] vk::PFN_VoidFunction                           get_proc_addr(std::string_view name) const;
@@ -113,7 +116,8 @@ namespace vke {
         vk::PhysicalDevice        m_PhysicalDevice;
     };
 
-    class VKE_API Device : public std::enable_shared_from_this<Device> {
+    class VKE_API Device : public std::enable_shared_from_this<Device>,
+                           public Ownable {
         Device(const PhysicalDevice& physical_device, vk::Device device, QueueCollection queue_collection);
 
       public:
@@ -127,17 +131,24 @@ namespace vke {
         [[nodiscard]] inline const std::shared_ptr<Instance>& instance() const noexcept { return m_PhysicalDevice.instance(); }
         [[nodiscard]] inline const PhysicalDevice&            physical_device() const noexcept { return m_PhysicalDevice; }
 
-        [[nodiscard]] inline const QueueCollection& queues() const noexcept { return m_QueueCollection; };
-
         template<instance_destructible T>
         inline void destroy(T object) const {
-            m_PhysicalDevice.destroy(object);
+            physical_device().destroy(object);
         }
 
         template<device_destructible T>
         inline void destroy(T object) const {
             handle().destroy(object);
         }
+
+        [[nodiscard]] inline const QueueCollection& queues() const noexcept { return m_QueueCollection; }
+
+        [[nodiscard]] vk::Semaphore create_semaphore() const;
+        [[nodiscard]] vk::Fence     create_fence() const;
+        [[nodiscard]] vk::Fence     create_fence(bool signaled) const;
+
+        void wait_for_fence(vk::Fence fence) const;
+        void reset_fence(vk::Fence fence) const;
 
       private:
         PhysicalDevice  m_PhysicalDevice;

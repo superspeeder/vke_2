@@ -13,4 +13,5 @@ namespace vke::global {
     bool                           g_WantsQuit = false;
     int                            g_ExitCode  = 0;
     std::shared_ptr<WindowManager> g_WindowManager;
+    std::shared_ptr<RendererStack> g_RendererStack;
 } // namespace vke::global

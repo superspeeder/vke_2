@@ -24,6 +24,14 @@
 #  define VKE_API
 #endif
 
+#include <cassert>
+
+#ifndef NDEBUG
+#  define VKE_ASSERT(expr, message) assert((expr, message))
+#else
+#  define VKE_ASSERT(...)
+#endif
+
 #include <vulkan/vulkan.hpp>
 
 #include <eventpp/callbacklist.h>
@@ -45,12 +53,15 @@ namespace vke {
     class VKE_API Surface;
     class VKE_API WindowManager;
     struct WindowData;
+    class VKE_API RendererStack;
+    class VKE_API Renderer;
+    class VKE_API ImageSupplier;
 
     template<typename F>
-    class Slot;
+    class Signal;
 
     template<typename... Args>
-    class Slot<void(Args...)> {
+    class Signal<void(Args...)> {
         eventpp::CallbackList<void(Args...)> m_CallbackList;
         using cb_base_t = eventpp::internal_::CallbackListBase<void(Args...), eventpp::DefaultPolicies>;
 
@@ -74,13 +85,15 @@ namespace vke {
         std::vector<std::function<void()>> m_Unsubscribers;
 
       public:
-        inline ~ScopedSlotSubscriber() {
-            for (auto& callback : m_Unsubscribers) { callback(); }
+        virtual inline ~ScopedSlotSubscriber() {
+            for (auto& callback : m_Unsubscribers) {
+                callback();
+            }
         }
 
         template<typename F>
-        void register_listener(Slot<F>& slot, typename Slot<F>::handle_t handle) {
-            Slot<F>* p_slot = &slot;
+        void register_listener(Signal<F>& slot, typename Signal<F>::handle_t handle) {
+            Signal<F>* p_slot = &slot;
             m_Unsubscribers.emplace_back([p_slot, handle] { p_slot->remove(handle); });
         }
     };

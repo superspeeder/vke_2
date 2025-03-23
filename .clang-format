@@ -21,7 +21,7 @@ AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLambdasOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: false
 BinPackArguments: true
 BinPackParameters: OnePerLine
@@ -115,3 +115,5 @@ SpacesInSquareBrackets: false
 Standard: Latest
 TabWidth: 4
 UseTab: Never
+AttributeMacros:
+  - VKE_API

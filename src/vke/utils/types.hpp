@@ -25,4 +25,15 @@ namespace vke {
     };
 
     struct DeviceOptions {};
+
+    struct ImageProperties {
+        vk::Extent3D  extent;
+        vk::Format    format;
+        vk::ImageType base_type;
+    };
+
+    struct ImageTransitionState {
+        vk::ImageLayout  layout;
+        vk::AccessFlags2 access;
+    };
 } // namespace vke

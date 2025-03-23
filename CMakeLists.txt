@@ -40,10 +40,24 @@ add_library(engine SHARED
         src/vke/global.cpp
         src/vke/global.hpp
         src/vke/window_manager.cpp
-        src/vke/window_manager.hpp)
+        src/vke/window_manager.hpp
+        src/vke/renderer/renderer.cpp
+        src/vke/renderer/renderer.hpp
+        src/vke/dependency.cpp
+        src/vke/dependency.hpp
+        src/vke/renderer/graphics_pipeline.cpp
+        src/vke/renderer/graphics_pipeline.hpp
+        src/vke/renderer/shader_module.cpp
+        src/vke/renderer/shader_module.hpp
+        src/vke/renderer/pipeline_layout.cpp
+        src/vke/renderer/pipeline_layout.hpp
+        src/vke/renderer/generic_renderer.cpp
+        src/vke/renderer/generic_renderer.hpp
+        src/vke/resource/resource.cpp
+        src/vke/resource/resource.hpp)
 target_include_directories(engine PUBLIC src)
 target_link_libraries(engine PUBLIC Vulkan::Headers glm::glm eventpp::eventpp)
-target_compile_definitions(engine PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 NOMINMAX)
+target_compile_definitions(engine PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1 NOMINMAX GLM_ENABLE_EXPERIMENTAL)
 
 target_compile_definitions(engine PUBLIC $<IF:$<STREQUAL:$<TARGET_PROPERTY:engine,TYPE>,SHARED_LIBRARY>,VKE_SHARED,>)
 target_compile_definitions(engine PRIVATE $<IF:$<STREQUAL:$<TARGET_PROPERTY:engine,TYPE>,SHARED_LIBRARY>,VKE_SHARED_EXPORTS,>)

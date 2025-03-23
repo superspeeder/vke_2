@@ -13,4 +13,5 @@ namespace vke::global {
     extern VKE_API bool                    g_WantsQuit;
     extern VKE_API int                     g_ExitCode;
     extern VKE_API std::shared_ptr<WindowManager> g_WindowManager;
+    extern VKE_API std::shared_ptr<RendererStack> g_RendererStack;
 } // namespace vke::global

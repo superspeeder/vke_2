@@ -2,43 +2,43 @@
 // Created by andy on 3/10/2025.
 //
 
-#include "lifecycle.hpp"
+#include "vke/lifecycle.hpp"
 
-#include "global.hpp"
-#include "window.hpp"
-#include "window_manager.hpp"
+#include "vke/global.hpp"
+#include "vke/renderer/renderer.hpp"
+#include "vke/window.hpp"
+#include "vke/window_manager.hpp"
 
 #include "vke/vke.hpp"
 
-#include <ios>
 #include <iostream>
 
 namespace vke::lifecycle {
-    Slot<void(AppConfiguration&)> configure_app;
+    Signal<void(AppConfiguration&)> configure_app;
 
-    Slot<void()> start;
-    Slot<void()> cleanup;
-    Slot<void()> cleanup_user;
-    Slot<void()> ready;
+    Signal<void()> start;
+    Signal<void()> cleanup;
+    Signal<void()> cleanup_user;
+    Signal<void()> ready;
 
-    Slot<void()> pre_update;
-    Slot<void()> update;
-    Slot<void()> post_update;
+    Signal<void()> pre_update;
+    Signal<void()> update;
+    Signal<void()> post_update;
 
-    Slot<void()> pre_render;
-    Slot<void()> render;
-    Slot<void()> post_render;
+    Signal<void()> pre_render;
+    Signal<void()> render;
+    Signal<void()> post_render;
 
-    Slot<void(bool&)> should_close;
+    Signal<void(bool&)> should_close;
 
-    Slot<void()> vulkan_is_available;
+    Signal<void()> vulkan_is_available;
 
     namespace internal {
-        Slot<void(const std::shared_ptr<Window>&)> register_new_window;
-        Slot<void()>                               post_instance;
-        Slot<void()>                               post_physical_device;
-        Slot<void()>                               post_device;
-        Slot<void()>                               os_poll;
+        Signal<void(const std::shared_ptr<Window>&)> register_new_window;
+        Signal<void()>                               post_instance;
+        Signal<void()>                               post_physical_device;
+        Signal<void()>                               post_device;
+        Signal<void()>                               os_poll;
     } // namespace internal
 
     void setup_listeners() {
@@ -61,12 +61,14 @@ namespace vke::lifecycle {
             internal::post_device();
 
             global::g_WindowManager = std::make_shared<WindowManager>();
+            global::g_RendererStack = std::make_shared<RendererStack>();
         });
 
         cleanup.append([] {
             global::g_Device->handle().waitIdle();
             cleanup_user();
 
+            global::g_RendererStack.reset();
             global::g_WindowManager.reset();
 
             global::g_Device.reset();
@@ -107,6 +109,7 @@ namespace vke::lifecycle {
 
             pre_render();
             render();
+            global::g_RendererStack->render();
             post_render();
 
             lifecycle::should_close(should_close);

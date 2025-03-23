@@ -114,7 +114,10 @@ namespace vke {
             DispatchMessageW(&msg);
         }
 
-        if (m_IsCloseRequested) { global::g_WindowManager->remove(shared_from_this()); }
+        if (m_IsCloseRequested) {
+            on_closed();
+            global::g_WindowManager->remove(shared_from_this());
+        }
         return true;
     }
 
@@ -122,5 +125,9 @@ namespace vke {
         RECT r;
         GetClientRect(m_Handle, &r);
         return {static_cast<uint32_t>(r.right), static_cast<uint32_t>(r.bottom)};
+    }
+
+    std::shared_ptr<Surface> Window::get_surface() {
+        return global::g_WindowManager->get_surface(shared_from_this());
     }
 } // namespace vke

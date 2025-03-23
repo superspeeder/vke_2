@@ -81,7 +81,9 @@ namespace vke {
 
         std::vector<PhysicalDevice> physical_devices;
         physical_devices.reserve(raw_physical_devices.size());
-        for (const auto& pd : raw_physical_devices) { physical_devices.emplace_back(shared_from_this(), pd); }
+        for (const auto& pd : raw_physical_devices) {
+            physical_devices.emplace_back(shared_from_this(), pd);
+        }
 
         return physical_devices;
     }
@@ -222,6 +224,26 @@ namespace vke {
 
     Device::~Device() {
         m_Device.destroy();
+    }
+
+    vk::Semaphore Device::create_semaphore() const {
+        return m_Device.createSemaphore(vk::SemaphoreCreateInfo{});
+    }
+
+    vk::Fence Device::create_fence() const {
+        return m_Device.createFence(vk::FenceCreateInfo{});
+    }
+
+    vk::Fence Device::create_fence(const bool signaled) const {
+        return m_Device.createFence(vk::FenceCreateInfo{signaled ? vk::FenceCreateFlags{vk::FenceCreateFlagBits::eSignaled} : vk::FenceCreateFlags{}});
+    }
+
+    void Device::wait_for_fence(const vk::Fence fence) const {
+        [[maybe_unused]] auto _ = m_Device.waitForFences(fence, true, UINT64_MAX);
+    }
+
+    void Device::reset_fence(const vk::Fence fence) const {
+        m_Device.resetFences(fence);
     }
 
     void load_vulkan(const std::shared_ptr<Device>& device) {

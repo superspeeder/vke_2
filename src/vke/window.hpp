@@ -9,6 +9,8 @@
 #  define UNICODE
 #endif
 
+#include "dependency.hpp"
+
 #include <string>
 #include <Windows.h>
 
@@ -16,9 +18,9 @@
 
 namespace vke {
 
-    class VKE_API Window
-        : public std::enable_shared_from_this<Window>,
-          public ScopedSlotSubscriber {
+    class VKE_API Window : public std::enable_shared_from_this<Window>,
+                           public ScopedSlotSubscriber,
+                           public Ownable {
       public:
         struct Settings {
             std::wstring title;
@@ -48,8 +50,11 @@ namespace vke {
 
         [[nodiscard]] vk::Extent2D get_extent() const;
 
-        Slot<void(vk::Extent2D)> on_resize;
-        Slot<void(bool&)>        on_close_requested;
+        [[nodiscard]] std::shared_ptr<Surface> get_surface();
+
+        Signal<void(vk::Extent2D)> on_resize;
+        Signal<void(bool&)>        on_close_requested;
+        Signal<void()>             on_closed;
 
       private:
         HINSTANCE m_hinstance;

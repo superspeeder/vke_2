@@ -64,8 +64,9 @@ namespace vke {
 
             m_SwapchainConfiguration.extent = surface_capabilities.currentExtent;
             if (m_SwapchainConfiguration.extent.height == UINT32_MAX) {
-                m_SwapchainConfiguration.extent =
-                  utils::clamp_extent(m_Window->get_extent(), surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent);
+                m_SwapchainConfiguration.extent = utils::clamp_extent(
+                  m_Window->get_extent(), surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent
+                );
             }
 
             m_SwapchainConfiguration.min_image_count = surface_capabilities.minImageCount + 1;
@@ -93,6 +94,7 @@ namespace vke {
 
         m_Swapchain = m_Device->handle().createSwapchainKHR(create_info);
         m_Images    = m_Device->handle().getSwapchainImagesKHR(m_Swapchain);
+        on_images_changed(m_Images);
 
         if (create_info.oldSwapchain) {
             // only fire this when actually recreating the swapchain, but not when we first create it.
@@ -101,5 +103,49 @@ namespace vke {
         }
 
         m_PendingRecreateSwapchain = false;
+    }
+
+    ImageProperties Surface::get_image_properties() {
+        return ImageProperties{
+          {m_SwapchainConfiguration.extent.width, m_SwapchainConfiguration.extent.height, 1},
+          m_SwapchainConfiguration.format,
+          vk::ImageType::e2D
+        };
+    }
+
+    vk::Image Surface::peek_image() {
+        return m_Images[m_CurrentImageIndex];
+    }
+
+    uint32_t Surface::peek_image_index() {
+        return m_CurrentImageIndex;
+    }
+
+    std::tuple<vk::Image, uint32_t, bool> Surface::next_image(const vk::Semaphore read_start_semaphore) {
+        try {
+            const auto ir = m_Device->handle().acquireNextImageKHR(m_Swapchain, UINT64_MAX, read_start_semaphore);
+            if (ir.result == vk::Result::eSuboptimalKHR) { m_PendingRecreateSwapchain = true; }
+            m_CurrentImageIndex = ir.value;
+            return std::make_tuple(m_Images[m_CurrentImageIndex], m_CurrentImageIndex, true);
+        } catch (vk::OutOfDateKHRError& e) {
+            m_PendingRecreateSwapchain = true;
+            throw exception::image_not_available();
+        }
+    }
+
+    const std::vector<vk::Image>& Surface::get_images() {
+        return m_Images;
+    }
+
+    vk::Image Surface::get_image_by_index(const uint32_t index) {
+        return m_Images[index];
+    }
+
+    void Surface::return_image(const vk::Semaphore write_finished_semaphore) {
+        vk::PresentInfoKHR present_info{};
+        present_info.setWaitSemaphores(write_finished_semaphore);
+        present_info.setSwapchains(m_Swapchain);
+        present_info.setImageIndices(m_CurrentImageIndex);
+        [[maybe_unused]] auto _ = m_Device->queues().main.queue.presentKHR(present_info);
     }
 } // namespace vke
