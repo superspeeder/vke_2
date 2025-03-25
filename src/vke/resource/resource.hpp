@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <vulkan/vulkan.hpp>
 
 /**
  * Resources loaded from disk are represented one of two ways:
@@ -81,7 +82,7 @@ namespace vke::res {
          * if the resource is unloaded (though this is generally held as a unique id which can be used to reach the resource, just with one or two
          * layers of indirection).
          */
-        bool permanent : 1;
+        bool is_permanent : 1;
 
         /**
          * Does the system need to preserve this resource unless it is manually cleaned up?
@@ -96,7 +97,7 @@ namespace vke::res {
          * you probably don't want to be reloading your scene from disk every frame (in the case of something wrong happening that makes it the least
          * frequently used and least recently used item on the list).
          */
-        bool manually_cleanup : 1;
+        bool allow_auto_unload : 1;
 
         uint8_t padding : 3;
     };
@@ -106,9 +107,22 @@ namespace vke::res {
         char    scope_name[MAX_RESOURCE_SCOPE_NAME_LENGTH];
     };
 
+    union ResourceId {
+        uint64_t    marker_id; // This is the unique id used for loading the resource from disk or accessing it from the map. Generally non-ephemeral.
+        const char* resource_name; // This is the name which can be used to load from disk. Not preferred, and lifetime must be externally managed.
+        void* resource_handle; // this field is used for things like vulkan object handles. typed ResourceHandle objects can use the type information
+                               // to properly convert this to the right type.
+    };
+
     class Resource {
       public:
         Resource();
+
+        bool allow_auto_unload() const noexcept;
+        bool allow_as_child() const noexcept;
+        bool allow_children() const noexcept;
+        bool is_static() const noexcept;
+        bool is_permanent() const noexcept;
 
       private:
     };
